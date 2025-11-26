@@ -299,10 +299,10 @@
                 const parkX = getCX(70);
                 const parkY = getCY(50);
                 
-                // Target Horizontal (90x70)
+                // Target Horizontal (90x70) - Horizontal slot
                 targetZone = {x: parkX, y: parkY, w: 90, h: 70, angle: -Math.PI/2};
                 
-                // Cars Above and Below (Horizontal)
+                // Cars Above and Below (Horizontal) - Rotated -PI/2 to be horizontal
                 obstacles.push({type: 'car', x: parkX, y: parkY - 80, angle: -Math.PI/2, color: '#e74c3c'});
                 obstacles.push({type: 'car', x: parkX, y: parkY + 80, angle: -Math.PI/2, color: '#f1c40f'});
                 
@@ -312,20 +312,21 @@
         },
         {
             title: "3. Le Créneau",
-            msg: "Marche arrière obligatoire ! Ne touche pas le trottoir (en haut).",
+            msg: "Marche arrière obligatoire ! Ne touche pas le trottoir à droite.",
             setup: () => {
-                const cx = getCX(15); const cy = getCY(60);
-                car.x = cx; car.y = cy + 40; car.angle = 0; // Start Left facing Right
+                const cx = getCX(50); const cy = getCY(50);
+                // Vertical road, car facing down (Math.PI/2)
+                car.x = cx - 50; car.y = cy - 150; car.angle = Math.PI/2;
                 
-                const targetX = getCX(50);
-                targetZone = {x: targetX, y: cy, w: 94, h: 68, angle: 0}; // Horizontal
+                // Target Zone Vertical
+                targetZone = {x: cx + 50, y: cy, w: 64, h: 90, angle: Math.PI/2};
                 
-                // Curb (Top)
-                obstacles.push({type: 'wall', x: getCX(50), y: cy - 50, w: getCX(100), h: 20});
+                // Curb (Right)
+                obstacles.push({type: 'wall', x: cx + 90, y: cy, w: 20, h: getCY(100)}); 
                 
-                // Cars (Left and Right)
-                obstacles.push({type: 'car', x: targetX - 110, y: cy, angle: 0, color: '#e74c3c'});
-                obstacles.push({type: 'car', x: targetX + 110, y: cy, angle: 0, color: '#f1c40f'});
+                // Cars Vertical (Aligned with road) - Facing Down (Math.PI)
+                obstacles.push({type: 'car', x: cx + 50, y: cy - 110, angle: Math.PI, color: '#e74c3c'});
+                obstacles.push({type: 'car', x: cx + 50, y: cy + 110, angle: Math.PI, color: '#f1c40f'});
             }
         }
     ];
@@ -555,12 +556,16 @@
              ctx.beginPath(); ctx.moveTo(cx-45, cy+35); ctx.lineTo(cx+45, cy+35); ctx.stroke();
         }
         else if (currentLevel === 2) {
-             // Créneau: Horizontal Road
-             const cy = getCY(60);
-             ctx.fillRect(0, cy-20, canvas.width, 120); // Road strip
-             ctx.fillStyle = '#ccc'; ctx.fillRect(0, 0, canvas.width, cy-50); // Sidewalk top
+             // Créneau: Vertical Road
+             const roadX = getCX(50);
+             ctx.fillRect(roadX - 60, 0, 120, canvas.height); // Road strip
+             
+             // Curb (Right)
+             ctx.fillStyle = '#ccc'; ctx.fillRect(roadX + 60, 0, 20, canvas.height);
+             
+             // Lane marking (Center)
              ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
-             ctx.beginPath(); ctx.moveTo(0, cy+40); ctx.lineTo(canvas.width, cy+40); ctx.stroke(); ctx.setLineDash([]);
+             ctx.beginPath(); ctx.moveTo(roadX, 0); ctx.lineTo(roadX, canvas.height); ctx.stroke(); ctx.setLineDash([]);
         }
 
         if (targetZone) {
@@ -577,6 +582,8 @@
             else if (obs.type === 'wall') {
                 ctx.fillStyle = '#95a5a6'; ctx.fillRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
                 ctx.strokeStyle = '#7f8c8d'; ctx.strokeRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
+                // Stripe effect for walls
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(obs.x - obs.w/2, obs.y-obs.h/2); ctx.lineTo(obs.x+obs.w/2, obs.y+obs.h/2); ctx.stroke();
             } else if (obs.type === 'car') {
                 ctx.save(); ctx.translate(obs.x, obs.y); 
                 if (obs.angle) ctx.rotate(obs.angle); // Rotate car obstacles
