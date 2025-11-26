@@ -274,21 +274,18 @@
             title: "1. Le Stop",
             msg: "Arrête-toi DANS le rectangle vert. Reste sur la voie de droite !",
             setup: () => {
-                const roadW = 160; // 80px per lane
+                const roadW = 160; 
                 const roadX = getCX(50);
                 
-                // Car start: Right lane
                 car.x = roadX + 40; car.y = getCY(85); car.angle = -Math.PI/2;
-                
-                // Target: Right lane
                 targetZone = {x: roadX + 40, y: getCY(35), w: 70, h: 90, angle: -Math.PI/2};
                 
-                // Stop Sign
-                obstacles.push({type: 'sign', x: roadX + 90, y: getCY(25), label: 'STOP'});
+                // Borders first (Under sign)
+                obstacles.push({type: 'wall', x: roadX - 90, y: getCY(50), w: 20, h: getCY(100)}); 
+                obstacles.push({type: 'wall', x: roadX + 90, y: getCY(50), w: 20, h: getCY(100)});
                 
-                // Road borders (Invisible walls but visual edges)
-                obstacles.push({type: 'wall', x: roadX - 90, y: getCY(50), w: 20, h: getCY(100)}); // Left border
-                obstacles.push({type: 'wall', x: roadX + 90, y: getCY(50), w: 20, h: getCY(100)}); // Right border
+                // Stop Sign Last (On top)
+                obstacles.push({type: 'sign', x: roadX + 95, y: getCY(25), label: 'STOP'});
             }
         },
         {
@@ -299,13 +296,8 @@
                 car.x = getCX(20); car.y = getCY(85); car.angle = -Math.PI/2;
                 targetZone = {x: cx, y: cy, w: 70, h: 90, angle: 0};
                 
-                // Back wall
                 obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 10, h: 100});
-                
-                // Cars on sides instead of cones (Gap calculated: Zone 70 + margins)
-                // Left Car
                 obstacles.push({type: 'car', x: cx - 55, y: cy, color: '#e74c3c'});
-                // Right Car
                 obstacles.push({type: 'car', x: cx + 55, y: cy, color: '#f1c40f'});
             }
         },
@@ -317,10 +309,7 @@
                 car.x = cx - 60; car.y = cy - 150; car.angle = Math.PI/2;
                 targetZone = {x: cx, y: cy, w: 68, h: 94, angle: Math.PI/2};
                 
-                // Sidewalk (Right side of car)
                 obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 20, h: getCY(100)}); 
-                
-                // Cars
                 obstacles.push({type: 'car', x: cx, y: cy - 110, color: '#e74c3c'});
                 obstacles.push({type: 'car', x: cx, y: cy + 110, color: '#f1c40f'});
             }
