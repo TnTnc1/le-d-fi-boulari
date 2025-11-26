@@ -297,8 +297,16 @@
                 targetZone = {x: cx, y: cy, w: 70, h: 90, angle: 0};
                 
                 obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 10, h: 100});
-                obstacles.push({type: 'car', x: cx - 55, y: cy, color: '#e74c3c'});
-                obstacles.push({type: 'car', x: cx + 55, y: cy, color: '#f1c40f'});
+                
+                // Cars on sides (Rotated 90 deg) - Top and Bottom
+                // Cars are 30x60. If rotated 90 deg, they are 60 wide (X) and 30 high (Y).
+                // Target H is 90. Car W is 30. 90 space.
+                // Cars at Y - 60 and Y + 60?
+                // Car center to center gap. 
+                // Let's put them at cy - 70 and cy + 70 to give space.
+                
+                obstacles.push({type: 'car', x: cx, y: cy - 70, angle: 0, color: '#e74c3c'}); // Top Car
+                obstacles.push({type: 'car', x: cx, y: cy + 70, angle: 0, color: '#f1c40f'}); // Bottom Car
             }
         },
         {
@@ -309,9 +317,12 @@
                 car.x = cx - 60; car.y = cy - 150; car.angle = Math.PI/2;
                 targetZone = {x: cx, y: cy, w: 68, h: 94, angle: Math.PI/2};
                 
+                // Sidewalk (Right side of car)
                 obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 20, h: getCY(100)}); 
-                obstacles.push({type: 'car', x: cx, y: cy - 110, color: '#e74c3c'});
-                obstacles.push({type: 'car', x: cx, y: cy + 110, color: '#f1c40f'});
+                
+                // Cars
+                obstacles.push({type: 'car', x: cx, y: cy - 110, angle: Math.PI/2, color: '#e74c3c'});
+                obstacles.push({type: 'car', x: cx, y: cy + 110, angle: Math.PI/2, color: '#f1c40f'});
             }
         }
     ];
@@ -582,7 +593,8 @@
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(obs.x - obs.w/2, obs.y-obs.h/2); ctx.lineTo(obs.x+obs.w/2, obs.y+obs.h/2); ctx.stroke();
             } else if (obs.type === 'car') {
                 ctx.save(); ctx.translate(obs.x, obs.y); 
-                // Simple rotation for parked cars if needed, here assumed vertical
+                // Handle Rotation for obstacles
+                if (obs.angle) ctx.rotate(obs.angle);
                 ctx.drawImage(carObsImg, -15, -30, 30, 60); ctx.restore();
             }
         }
