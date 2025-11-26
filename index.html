@@ -449,7 +449,8 @@
 
     function draw() {
         if (state !== 'PLAYING') { ctx.clearRect(0,0,canvas.width, canvas.height); return; }
-        ctx.fillStyle = groundPattern || '#a0522d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Use asphaltPattern instead of groundPattern
+        ctx.fillStyle = asphaltPattern || '#a0522d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         if (targetZone) {
             ctx.save(); ctx.translate(targetZone.x, targetZone.y); ctx.rotate(targetZone.angle);
             ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 4; ctx.setLineDash([10, 10]);
