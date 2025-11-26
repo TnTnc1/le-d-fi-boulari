@@ -155,7 +155,6 @@
     <!-- INTRO VIDEO -->
     <div id="introScreen">
         <button id="unmuteIntroBtn" class="btn-sound-intro">🔊 Activer le son</button>
-        <!-- Muted est OBLIGATOIRE pour l'autoplay sur mobile/chrome -->
         <video id="introVideo" playsinline autoplay muted>
             <source src="https://res.cloudinary.com/drjkiqihn/video/upload/v1764123464/Cr%C3%A9ation_vid%C3%A9o_intro_Le_D%C3%A9fi_Boulari__c4zxhr.mp4" type="video/mp4">
         </video>
@@ -316,11 +315,11 @@
                 // Start Left, Bottom Lane (Right side of road)
                 car.x = getCX(10); car.y = roadY + 40; car.angle = 0; // Facing Right
                 
-                // Target Far Right, Bottom Lane
-                targetZone = {x: getCX(85), y: roadY + 40, w: 90, h: 70, angle: 0};
+                // Target moved closer (60%) to avoid pedal overlap
+                targetZone = {x: getCX(60), y: roadY + 40, w: 90, h: 70, angle: 0};
                 
                 // Stop Sign
-                obstacles.push({type: 'sign', x: getCX(90), y: roadY + 95, label: 'STOP'});
+                obstacles.push({type: 'sign', x: getCX(65), y: roadY + 95, label: 'STOP'});
                 
                 // Road Borders
                 obstacles.push({type: 'wall', x: getCX(50), y: roadY - 90, w: getCX(100), h: 20}); 
@@ -329,7 +328,7 @@
         },
         {
             title: "2. Le Bataille",
-            msg: "Gare-toi en marche avant entre les deux voitures.",
+            msg: "Gare-toi en marche avant entre les deux voitures. Doucement.",
             setup: () => {
                 // Vertical Road on Left, Parking on Right
                 const roadX = getCX(25);
@@ -347,14 +346,14 @@
                 // Wall Back
                 obstacles.push({type: 'wall', x: parkX + 55, y: parkY, w: 10, h: 300});
                 
-                // Cars Above and Below (Horizontal)
-                obstacles.push({type: 'car', x: parkX, y: parkY - 80, angle: 0, color: '#e74c3c'});
-                obstacles.push({type: 'car', x: parkX, y: parkY + 80, angle: 0, color: '#f1c40f'});
+                // Cars Above and Below - HORIZONTAL (Rotated -PI/2)
+                obstacles.push({type: 'car', x: parkX, y: parkY - 80, angle: -Math.PI/2, color: '#e74c3c'});
+                obstacles.push({type: 'car', x: parkX, y: parkY + 80, angle: -Math.PI/2, color: '#f1c40f'});
             }
         },
         {
             title: "3. Le Créneau",
-            msg: "Marche arrière obligatoire ! Ne touche pas le trottoir (en haut).",
+            msg: "Marche arrière obligatoire ! Ne touche pas le trottoir à droite.",
             setup: () => {
                 // Horizontal Road
                 const roadY = getCY(60);
@@ -369,9 +368,9 @@
                 // Curb (Top)
                 obstacles.push({type: 'wall', x: getCX(50), y: roadY - 80, w: getCX(100), h: 20});
                 
-                // Cars (Left and Right) - Horizontal
-                obstacles.push({type: 'car', x: targetX - 110, y: roadY - 35, angle: 0, color: '#e74c3c'});
-                obstacles.push({type: 'car', x: targetX + 110, y: roadY - 35, angle: 0, color: '#f1c40f'});
+                // Cars (Left and Right) - Horizontal (Rotated -PI/2 to face sideways)
+                obstacles.push({type: 'car', x: targetX - 110, y: roadY - 35, angle: -Math.PI/2, color: '#e74c3c'});
+                obstacles.push({type: 'car', x: targetX + 110, y: roadY - 35, angle: -Math.PI/2, color: '#f1c40f'});
             }
         }
     ];
@@ -599,23 +598,19 @@
              ctx.fillRect(0, roadY - roadH/2, canvas.width, roadH);
              ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
              ctx.beginPath(); ctx.moveTo(0, roadY); ctx.lineTo(canvas.width, roadY); ctx.stroke(); ctx.setLineDash([]);
-             // Stop line at right
-             ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(getCX(85), roadY + 10); ctx.lineTo(getCX(85), roadY + roadH/2 - 10); ctx.stroke();
+             // Stop line at right (near 60%)
+             ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(getCX(65), roadY + 10); ctx.lineTo(getCX(65), roadY + roadH/2 - 10); ctx.stroke();
         } 
         else if (currentLevel === 1) {
              // Level 2: Bataille (Vertical Road on Left, Parking on Right)
              ctx.fillRect(0, 0, canvas.width, canvas.height);
              ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
-             // Divider line vertical at ~35% width
-             const divX = getCX(35);
-             ctx.beginPath(); ctx.moveTo(divX, 0); ctx.lineTo(divX, canvas.height); ctx.stroke();
-             
-             // Parking spots horizontal lines
-             const parkX = getCX(70); const parkY = getCY(50);
-             // Top line
-             ctx.beginPath(); ctx.moveTo(divX, parkY - 55); ctx.lineTo(canvas.width, parkY - 55); ctx.stroke();
-             // Bottom line
-             ctx.beginPath(); ctx.moveTo(divX, parkY + 55); ctx.lineTo(canvas.width, parkY + 55); ctx.stroke();
+             const cx = getCX(70); const cy = getCY(50);
+             // Divider line
+             ctx.beginPath(); ctx.moveTo(getCX(50), 0); ctx.lineTo(getCX(50), canvas.height); ctx.stroke();
+             // Parking spots lines
+             ctx.beginPath(); ctx.moveTo(cx-45, cy-35); ctx.lineTo(cx+45, cy-35); ctx.stroke();
+             ctx.beginPath(); ctx.moveTo(cx-45, cy+35); ctx.lineTo(cx+45, cy+35); ctx.stroke();
         }
         else if (currentLevel === 2) {
              // Level 3: Créneau (Horizontal Road)
@@ -642,6 +637,7 @@
             else if (obs.type === 'wall') {
                 ctx.fillStyle = '#95a5a6'; ctx.fillRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
                 ctx.strokeStyle = '#7f8c8d'; ctx.strokeRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
+                // Stripe effect for walls
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(obs.x - obs.w/2, obs.y-obs.h/2); ctx.lineTo(obs.x+obs.w/2, obs.y+obs.h/2); ctx.stroke();
             } else if (obs.type === 'car') {
                 ctx.save(); ctx.translate(obs.x, obs.y); 
