@@ -155,6 +155,7 @@
     <!-- INTRO VIDEO -->
     <div id="introScreen">
         <button id="unmuteIntroBtn" class="btn-sound-intro">🔊 Activer le son</button>
+        <!-- Muted est OBLIGATOIRE pour l'autoplay sur mobile/chrome -->
         <video id="introVideo" playsinline autoplay muted>
             <source src="https://res.cloudinary.com/drjkiqihn/video/upload/v1764123464/Cr%C3%A9ation_vid%C3%A9o_intro_Le_D%C3%A9fi_Boulari__c4zxhr.mp4" type="video/mp4">
         </video>
@@ -318,12 +319,12 @@
                 // Target moved closer (60%) to avoid pedal overlap
                 targetZone = {x: getCX(60), y: roadY + 40, w: 90, h: 70, angle: 0};
                 
-                // Stop Sign
-                obstacles.push({type: 'sign', x: getCX(65), y: roadY + 95, label: 'STOP'});
-                
-                // Road Borders
+                // Road Borders FIRST
                 obstacles.push({type: 'wall', x: getCX(50), y: roadY - 90, w: getCX(100), h: 20}); 
                 obstacles.push({type: 'wall', x: getCX(50), y: roadY + 90, w: getCX(100), h: 20});
+                
+                // Stop Sign LAST (Draw on top)
+                obstacles.push({type: 'sign', x: getCX(65), y: roadY + 95, label: 'STOP'});
             }
         },
         {
@@ -524,6 +525,7 @@
         timerEl.classList.add('penalty-flash');
         setTimeout(() => timerEl.classList.remove('penalty-flash'), 500);
         document.getElementById('monitorMsg').innerText = msg;
+        car.speed = -car.speed * 0.5;
     }
 
     function isPointInTarget(p, t) {
@@ -641,7 +643,7 @@
                 ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(obs.x - obs.w/2, obs.y-obs.h/2); ctx.lineTo(obs.x+obs.w/2, obs.y+obs.h/2); ctx.stroke();
             } else if (obs.type === 'car') {
                 ctx.save(); ctx.translate(obs.x, obs.y); 
-                if (obs.angle) ctx.rotate(obs.angle); 
+                if (obs.angle) ctx.rotate(obs.angle); // Rotate car obstacles
                 ctx.drawImage(carObsImg, -15, -30, 30, 60); ctx.restore();
             }
         }
