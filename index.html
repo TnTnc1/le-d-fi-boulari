@@ -15,6 +15,7 @@
             width: 100vw; 
             height: 100vh; 
             overflow: hidden; 
+            /* Image de fond paysage */
             background: url('https://i.postimg.cc/VL0sLRv5/IMG-3343.jpg') no-repeat center center;
             background-size: cover;
         }
@@ -198,11 +199,21 @@
     const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
 
     // --- Assets ---
-    let asphaltPattern;
-    const carImg = new Image(); carImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='60' viewBox='0 0 30 60'%3E%3Cpath d='M3,12 Q3,6 9,6 L21,6 Q27,6 27,12 L27,51 Q27,57 21,57 L9,57 Q3,57 3,51 Z' fill='%233498db' stroke='%232980b9' stroke-width='1'/%3E%3Crect x='5' y='15' width='20' height='9' rx='1' fill='%232c3e50'/%3E%3Crect x='5' y='39' width='20' height='7' rx='1' fill='%232c3e50'/%3E%3Crect x='3' y='6' width='5' height='3' rx='0.5' fill='%23f1c40f'/%3E%3Crect x='22' y='6' width='5' height='3' rx='0.5' fill='%23f1c40f'/%3E%3Crect x='3' y='54' width='5' height='3' rx='0.5' fill='%23e74c3c'/%3E%3Crect x='22' y='54' width='5' height='3' rx='0.5' fill='%23e74c3c'/%3E%3Cpath d='M6,27 L24,27' stroke='rgba(0,0,0,0.1)' stroke-width='1'/%3E%3C/svg%3E";
-    const carObsImg = new Image(); carObsImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='60' viewBox='0 0 30 60'%3E%3Cpath d='M3,12 Q3,6 9,6 L21,6 Q27,6 27,12 L27,51 Q27,57 21,57 L9,57 Q3,57 3,51 Z' fill='%23e74c3c' stroke='%23c0392b' stroke-width='1'/%3E%3Crect x='5' y='15' width='20' height='9' rx='1' fill='%232c3e50'/%3E%3Crect x='5' y='39' width='20' height='7' rx='1' fill='%232c3e50'/%3E%3C/svg%3E";
-    const coneImg = new Image(); coneImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%23e67e22' stroke='%23d35400' stroke-width='1'/%3E%3Ccircle cx='10' cy='10' r='5' fill='white'/%3E%3C/svg%3E";
-    const stopImg = new Image(); stopImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' fill='%23c0392b' rx='5'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold' font-size='12'%3ESTOP%3C/text%3E%3C/svg%3E";
+    let groundPattern; // Renommé pour 'terre rouge'
+    
+    // Car Sprite (SVG) - CHANGÉ EN BLANC
+    const carImg = new Image(); 
+    carImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='60' viewBox='0 0 30 60'%3E%3Cpath d='M3,12 Q3,6 9,6 L21,6 Q27,6 27,12 L27,51 Q27,57 21,57 L9,57 Q3,57 3,51 Z' fill='%23ffffff' stroke='%23bdc3c7' stroke-width='1'/%3E%3Crect x='5' y='15' width='20' height='9' rx='1' fill='%232c3e50'/%3E%3Crect x='5' y='39' width='20' height='7' rx='1' fill='%232c3e50'/%3E%3Crect x='3' y='6' width='5' height='3' rx='0.5' fill='%23f1c40f'/%3E%3Crect x='22' y='6' width='5' height='3' rx='0.5' fill='%23f1c40f'/%3E%3Crect x='3' y='54' width='5' height='3' rx='0.5' fill='%23e74c3c'/%3E%3Crect x='22' y='54' width='5' height='3' rx='0.5' fill='%23e74c3c'/%3E%3Ctext x='15' y='35' font-family='Arial' font-size='8' fill='%233498db' text-anchor='middle' transform='rotate(-90 15 35)'%3EAUTO-ECOLE%3C/text%3E%3Cpath d='M6,27 L24,27' stroke='rgba(0,0,0,0.1)' stroke-width='1'/%3E%3C/svg%3E";
+
+    // Other Car (Obstacle)
+    const carObsImg = new Image(); 
+    carObsImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='60' viewBox='0 0 30 60'%3E%3Cpath d='M3,12 Q3,6 9,6 L21,6 Q27,6 27,12 L27,51 Q27,57 21,57 L9,57 Q3,57 3,51 Z' fill='%23e74c3c' stroke='%23c0392b' stroke-width='1'/%3E%3Crect x='5' y='15' width='20' height='9' rx='1' fill='%232c3e50'/%3E%3Crect x='5' y='39' width='20' height='7' rx='1' fill='%232c3e50'/%3E%3C/svg%3E";
+    
+    const coneImg = new Image(); 
+    coneImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%23e67e22' stroke='%23d35400' stroke-width='1'/%3E%3Ccircle cx='10' cy='10' r='5' fill='white'/%3E%3C/svg%3E";
+    
+    const stopImg = new Image(); 
+    stopImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40' viewBox='0 0 40 40'%3E%3Crect x='2' y='2' width='36' height='36' fill='%23c0392b' rx='5'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white' font-family='Arial' font-weight='bold' font-size='12'%3ESTOP%3C/text%3E%3C/svg%3E";
 
     // Game Params
     const CAR_W = 30; const CAR_H = 60; const WHEELBASE = 40; const MAX_STEER = 0.6;
@@ -225,14 +236,23 @@
         { title: "3. Le Créneau", msg: "Marche arrière obligatoire !", setup: () => { const cx = getCX(50); const cy = getCY(50); car.x = cx - 60; car.y = cy - 150; car.angle = Math.PI/2; targetZone = {x: cx, y: cy, w: 68, h: 94, angle: Math.PI/2}; obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 20, h: getCY(90)}); obstacles.push({type: 'car', x: cx, y: cy - 110, color: '#e74c3c'}); obstacles.push({type: 'car', x: cx, y: cy + 110, color: '#f1c40f'}); } }
     ];
 
-    function generateAsphalt() {
-        const pCanvas = document.createElement('canvas'); pCanvas.width = 64; pCanvas.height = 64; const pCtx = pCanvas.getContext('2d');
-        pCtx.fillStyle = '#444'; pCtx.fillRect(0,0,64,64);
-        for(let i=0; i<200; i++) { pCtx.fillStyle = Math.random() > 0.5 ? '#555' : '#333'; pCtx.fillRect(Math.random()*64, Math.random()*64, 2, 2); }
-        asphaltPattern = ctx.createPattern(pCanvas, 'repeat');
+    function generateGround() {
+        // Génération d'une texture "Terre Rouge" (Latérite)
+        const pCanvas = document.createElement('canvas'); pCanvas.width = 128; pCanvas.height = 128; const pCtx = pCanvas.getContext('2d');
+        
+        // Base rouge/marron
+        pCtx.fillStyle = '#b45f04'; pCtx.fillRect(0,0,128,128);
+        
+        // Bruit / Cailloux
+        for(let i=0; i<500; i++) { 
+            pCtx.fillStyle = Math.random() > 0.5 ? '#8e402a' : '#d35400'; 
+            const size = Math.random() * 3;
+            pCtx.fillRect(Math.random()*128, Math.random()*128, size, size); 
+        }
+        groundPattern = ctx.createPattern(pCanvas, 'repeat');
     }
 
-    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; generateAsphalt(); }
+    function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; generateGround(); }
     window.addEventListener('resize', resize); resize();
 
     // --- Intro Logic ---
@@ -249,11 +269,6 @@
 
     introVideo.addEventListener('ended', endIntro);
     skipBtn.addEventListener('click', endIntro);
-    
-    // Try autoplay (muted usually works)
-    // Note: We rely on user interaction 'skip' or video end. 
-    // For better UX on mobile, we might need a user tap to start video if blocked.
-    // But here we assume it plays or user hits skip.
 
     // --- Game Logic ---
 
@@ -424,7 +439,9 @@
 
     function draw() {
         if (state !== 'PLAYING') { ctx.clearRect(0,0,canvas.width, canvas.height); return; }
-        ctx.fillStyle = asphaltPattern || '#555'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        // Draw Red Earth Ground
+        ctx.fillStyle = groundPattern || '#a0522d'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
         if (targetZone) {
             ctx.save(); ctx.translate(targetZone.x, targetZone.y); ctx.rotate(targetZone.angle);
             ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 4; ctx.setLineDash([10, 10]);
@@ -449,10 +466,18 @@
     function drawCar() {
         ctx.save(); ctx.translate(car.x, car.y); ctx.rotate(car.angle + Math.PI/2);
         if (Date.now() - lastCrashTime < 1000 && Math.floor(Date.now() / 100) % 2 === 0) ctx.globalAlpha = 0.5;
+        
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.3)'; ctx.fillRect(-12, -20, 30, 60);
+
+        // Wheels
         ctx.fillStyle = '#000'; ctx.fillRect(-14, 15, 6, 12); ctx.fillRect(8, 15, 6, 12);
         ctx.save(); ctx.translate(-11, -20); ctx.rotate(car.steering); ctx.fillRect(-3, -6, 6, 12); ctx.restore();
         ctx.save(); ctx.translate(11, -20); ctx.rotate(car.steering); ctx.fillRect(-3, -6, 6, 12); ctx.restore();
+        
+        // Car Body (White)
         ctx.drawImage(carImg, -15, -30, 30, 60);
+        
         if (car.inputs.brake || keys.down) { ctx.fillStyle = 'rgba(255, 0, 0, 0.6)'; ctx.shadowColor = '#f00'; ctx.shadowBlur = 15; ctx.fillRect(-12, 26, 6, 3); ctx.fillRect(6, 26, 6, 3); ctx.shadowBlur = 0; }
         if (car.gear === -1) { ctx.fillStyle = 'rgba(255, 255, 255, 0.8)'; ctx.fillRect(-8, 26, 4, 3); }
         ctx.restore();
