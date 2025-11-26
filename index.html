@@ -13,7 +13,8 @@
         #game-container { 
             position: relative; 
             width: 100vw; 
-            height: 100vh; 
+            height: 100vh; /* Fallback */
+            height: 100dvh; /* Hauteur dynamique mobile */
             overflow: hidden; 
             background: url('https://i.postimg.cc/VL0sLRv5/IMG-3343.jpg') no-repeat center center;
             background-size: cover;
@@ -106,12 +107,31 @@
         .pedal:active, .pedal.active-key { transform: translateY(5px); box-shadow: none; }
         .brake { background: linear-gradient(to bottom, #ff7675, #d63031); } .gas { background: linear-gradient(to bottom, #55efc4, #00b894); }
 
+        /* Mobile Optimizations for Controls */
+        @media (max-height: 500px) {
+            .controls-area { height: 140px; bottom: 10px; }
+            .wheel-zone { width: 120px; height: 120px; }
+            .pedal { width: 60px; height: 80px; font-size: 1rem; }
+            .gear-stick { width: 50px; height: 50px; font-size: 1.2rem; }
+        }
+
         /* Menus */
         .modal-bg { background: rgba(0,0,0,0.85); display: flex; justify-content: center; align-items: center; backdrop-filter: blur(5px); }
-        .menu-card { background: #f5f6fa; border-radius: 15px; padding: 1.5rem; text-align: center; max-width: 500px; width: 95%; box-shadow: 0 20px 50px rgba(0,0,0,0.7); border-top: 10px solid #3498db; position: relative; }
+        .menu-card { background: #f5f6fa; border-radius: 15px; padding: 1.5rem; text-align: center; max-width: 500px; width: 95%; max-height: 95vh; overflow-y: auto; box-shadow: 0 20px 50px rgba(0,0,0,0.7); border-top: 10px solid #3498db; position: relative; }
         .input-field { width: 100%; padding: 12px; margin: 15px 0; border: 2px solid #dcdde1; border-radius: 8px; font-size: 1.2rem; text-align: center; font-family: 'Handlee', cursive; background: #fff; }
         .btn-main { background: linear-gradient(to bottom, #3498db, #2980b9); color: white; font-size: 1.3rem; padding: 12px 30px; border-radius: 50px; border: none; width: 100%; cursor: pointer; text-transform: uppercase; box-shadow: 0 4px 0 #1c5980; text-shadow: 1px 1px 0 rgba(0,0,0,0.3); transition: transform 0.1s; }
         .btn-main:active { transform: translateY(4px); box-shadow: none; }
+
+        /* Compact Menu for Small Screens */
+        @media (max-height: 500px) {
+            .menu-card { padding: 0.5rem; max-width: 450px; display: flex; flex-direction: column; justify-content: center; }
+            .menu-logo { width: 80px !important; margin-bottom: 0.25rem !important; }
+            .menu-title { font-size: 1.5rem !important; margin-bottom: 0.25rem !important; }
+            .menu-desc { display: none; } /* Hide description on very short screens */
+            .menu-rules { font-size: 0.75rem !important; padding: 0.25rem !important; margin-bottom: 0.5rem !important; }
+            .input-field { padding: 8px !important; margin: 5px 0 !important; font-size: 1rem !important; }
+            .btn-main { padding: 8px 20px !important; font-size: 1rem !important; }
+        }
 
         /* Certificate */
         .certificate { background: #fffdf0; border: 8px double #2c3e50; padding: 20px; position: relative; font-family: 'Courier Prime', monospace; color: #333; box-shadow: 0 0 20px rgba(0,0,0,0.2); }
@@ -136,6 +156,7 @@
     <!-- INTRO VIDEO -->
     <div id="introScreen">
         <button id="unmuteIntroBtn" class="btn-sound-intro">🔊 Activer le son</button>
+        <!-- Muted est OBLIGATOIRE pour l'autoplay sur mobile/chrome -->
         <video id="introVideo" playsinline autoplay muted>
             <source src="https://res.cloudinary.com/drjkiqihn/video/upload/v1764123464/Cr%C3%A9ation_vid%C3%A9o_intro_Le_D%C3%A9fi_Boulari__c4zxhr.mp4" type="video/mp4">
         </video>
@@ -187,21 +208,17 @@
     <div id="startScreen" class="ui-layer interactive modal-bg hidden">
         <div class="menu-card">
             <!-- IMAGE D'ACCUEIL -->
-            <div class="w-full mb-4 overflow-hidden rounded-lg border border-gray-200 shadow-sm">
-                <img src="https://i.postimg.cc/VL0sLRv5/IMG-3343.jpg" alt="Le Défi Boulari" class="w-full h-auto object-contain block">
+            <div class="w-full mb-2 overflow-hidden rounded-lg border border-gray-200 shadow-sm menu-logo-container">
+                <img src="https://i.postimg.cc/VL0sLRv5/IMG-3343.jpg" alt="Le Défi Boulari" class="menu-logo w-40 mx-auto h-auto object-contain block">
             </div>
             
-            <h1 class="text-3xl font-bold text-gray-800 mb-1" style="color: #2980b9;">LE DÉFI BOULARI</h1>
+            <h1 class="menu-title text-3xl font-bold text-gray-800 mb-1" style="color: #2980b9;">LE DÉFI BOULARI</h1>
             
-            <div class="bg-gray-50 p-3 rounded-lg mb-4 text-left text-sm border border-gray-200 shadow-inner">
-                <p class="font-bold text-gray-700 mb-2">🏆 LE CONCOURS :</p>
-                <p class="text-gray-600 mb-3">Le meilleur chrono gagne un bon d'achat !</p>
-                <p class="font-bold text-gray-700 mb-1">📋 Règles :</p>
-                <ul class="list-disc list-inside space-y-1 text-gray-600 text-xs">
-                    <li>3 Manœuvres (Stop, Bataille, Créneau).</li>
-                    <li>Choc = <strong>+5s</strong> pénalité.</li>
-                    <li>Stationnement parfait = 0s pénalité.</li>
-                </ul>
+            <div class="menu-desc text-gray-500 font-bold mb-2 italic">Prouve que tu sais conduire !</div>
+            
+            <div class="menu-rules bg-gray-50 p-3 rounded-lg mb-2 text-left text-sm border border-gray-200 shadow-inner">
+                <p class="font-bold text-gray-700 mb-1">🏆 LE CONCOURS :</p>
+                <p class="text-gray-600 text-xs">Le meilleur chrono gagne un bon d'achat !</p>
             </div>
 
             <input type="text" id="playerNameInput" class="input-field" placeholder="Ton Prénom / Pseudo" maxlength="15">
@@ -341,8 +358,8 @@
                 obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 20, h: getCY(100)}); 
                 
                 // Cars
-                obstacles.push({type: 'car', x: cx, y: cy - 110, color: '#e74c3c'});
-                obstacles.push({type: 'car', x: cx, y: cy + 110, color: '#f1c40f'});
+                obstacles.push({type: 'car', x: cx, y: cy - 110, angle: Math.PI/2, color: '#e74c3c'});
+                obstacles.push({type: 'car', x: cx, y: cy + 110, angle: Math.PI/2, color: '#f1c40f'});
             }
         }
     ];
