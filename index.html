@@ -292,37 +292,40 @@
             title: "2. Le Bataille",
             msg: "Gare-toi en marche avant entre les deux voitures. Doucement.",
             setup: () => {
-                const cx = getCX(50); const cy = getCY(50);
-                car.x = getCX(20); car.y = getCY(85); car.angle = -Math.PI/2;
-                targetZone = {x: cx, y: cy, w: 70, h: 90, angle: 0};
+                const cx = getCX(30); const cy = getCY(90); // Start bottom left
+                car.x = cx; car.y = cy; car.angle = -Math.PI/2;
                 
-                obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 10, h: 100});
+                // Parking lot on right side
+                const parkX = getCX(70);
+                const parkY = getCY(50);
                 
-                // Cars on sides (Rotated 90 deg) - Top and Bottom
-                // Cars are 30x60. If rotated 90 deg, they are 60 wide (X) and 30 high (Y).
-                // Target H is 90. Car W is 30. 90 space.
-                // Cars at Y - 60 and Y + 60?
-                // Car center to center gap. 
-                // Let's put them at cy - 70 and cy + 70 to give space.
+                // Target Horizontal (90x70)
+                targetZone = {x: parkX, y: parkY, w: 90, h: 70, angle: -Math.PI/2};
                 
-                obstacles.push({type: 'car', x: cx, y: cy - 70, angle: 0, color: '#e74c3c'}); // Top Car
-                obstacles.push({type: 'car', x: cx, y: cy + 70, angle: 0, color: '#f1c40f'}); // Bottom Car
+                // Cars Above and Below (Horizontal)
+                obstacles.push({type: 'car', x: parkX, y: parkY - 80, angle: -Math.PI/2, color: '#e74c3c'});
+                obstacles.push({type: 'car', x: parkX, y: parkY + 80, angle: -Math.PI/2, color: '#f1c40f'});
+                
+                // Back Wall
+                obstacles.push({type: 'wall', x: parkX + 55, y: parkY, w: 10, h: 300});
             }
         },
         {
             title: "3. Le Créneau",
-            msg: "Marche arrière obligatoire ! Ne touche pas le trottoir à droite.",
+            msg: "Marche arrière obligatoire ! Ne touche pas le trottoir (en haut).",
             setup: () => {
-                const cx = getCX(50); const cy = getCY(50);
-                car.x = cx - 60; car.y = cy - 150; car.angle = Math.PI/2;
-                targetZone = {x: cx, y: cy, w: 68, h: 94, angle: Math.PI/2};
+                const cx = getCX(15); const cy = getCY(60);
+                car.x = cx; car.y = cy + 40; car.angle = 0; // Start Left facing Right
                 
-                // Sidewalk (Right side of car)
-                obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 20, h: getCY(100)}); 
+                const targetX = getCX(50);
+                targetZone = {x: targetX, y: cy, w: 94, h: 68, angle: 0}; // Horizontal
                 
-                // Cars
-                obstacles.push({type: 'car', x: cx, y: cy - 110, angle: Math.PI/2, color: '#e74c3c'});
-                obstacles.push({type: 'car', x: cx, y: cy + 110, angle: Math.PI/2, color: '#f1c40f'});
+                // Curb (Top)
+                obstacles.push({type: 'wall', x: getCX(50), y: cy - 50, w: getCX(100), h: 20});
+                
+                // Cars (Left and Right)
+                obstacles.push({type: 'car', x: targetX - 110, y: cy, angle: 0, color: '#e74c3c'});
+                obstacles.push({type: 'car', x: targetX + 110, y: cy, angle: 0, color: '#f1c40f'});
             }
         }
     ];
@@ -530,49 +533,34 @@
 
     function draw() {
         if (state !== 'PLAYING') { ctx.clearRect(0,0,canvas.width, canvas.height); return; }
+        ctx.fillStyle = asphaltPattern || '#555'; ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Draw Red Earth Background
-        ctx.fillStyle = '#a0522d'; 
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Asphalt drawing based on level
-        ctx.fillStyle = asphaltPattern || '#555';
-        
+        // Drawing Logic based on levels
         if (currentLevel === 0) {
-            // Level 1: Stop (Road with dashed line)
-            const roadX = getCX(50);
-            const roadW = 160; // Total width
-            ctx.fillRect(roadX - roadW/2, 0, roadW, canvas.height);
-            
-            // Lines
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
-            // Middle line
-            ctx.setLineDash([20, 20]);
-            ctx.beginPath(); ctx.moveTo(roadX, 0); ctx.lineTo(roadX, canvas.height); ctx.stroke(); ctx.setLineDash([]);
-            // Stop Line
-            ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(roadX + 10, getCY(25)); ctx.lineTo(roadX + roadW/2 - 10, getCY(25)); ctx.stroke();
+             const roadX = getCX(50); const roadW = 160;
+             ctx.fillRect(roadX - roadW/2, 0, roadW, canvas.height);
+             ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
+             ctx.beginPath(); ctx.moveTo(roadX, 0); ctx.lineTo(roadX, canvas.height); ctx.stroke(); ctx.setLineDash([]);
+             ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(roadX + 10, getCY(25)); ctx.lineTo(roadX + roadW/2 - 10, getCY(25)); ctx.stroke();
         } 
         else if (currentLevel === 1) {
-            // Level 2: Bataille (Parking Lot)
-            ctx.fillRect(0, 0, canvas.width, canvas.height);
-            // Parking Lines
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
-            const cx = getCX(50); const cy = getCY(50);
-            // Main aisle line
-            ctx.beginPath(); ctx.moveTo(0, cy+50); ctx.lineTo(canvas.width, cy+50); ctx.stroke();
-            // Spots
-            ctx.beginPath(); ctx.moveTo(cx-35, cy-50); ctx.lineTo(cx-35, cy+50); ctx.stroke();
-            ctx.beginPath(); ctx.moveTo(cx+35, cy-50); ctx.lineTo(cx+35, cy+50); ctx.stroke();
+             // Bataille: Vertical Road (Left), Parking (Right)
+             ctx.fillRect(0, 0, canvas.width, canvas.height);
+             ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+             const cx = getCX(70); const cy = getCY(50);
+             // Divider line
+             ctx.beginPath(); ctx.moveTo(getCX(50), 0); ctx.lineTo(getCX(50), canvas.height); ctx.stroke();
+             // Parking spots lines
+             ctx.beginPath(); ctx.moveTo(cx-45, cy-35); ctx.lineTo(cx+45, cy-35); ctx.stroke();
+             ctx.beginPath(); ctx.moveTo(cx-45, cy+35); ctx.lineTo(cx+45, cy+35); ctx.stroke();
         }
         else if (currentLevel === 2) {
-            // Level 3: Créneau (Street + Curb)
-            const curbX = getCX(50) + 50;
-            ctx.fillRect(0, 0, curbX, canvas.height);
-            // Curb visual
-            ctx.fillStyle = '#ccc'; ctx.fillRect(curbX, 0, 20, canvas.height);
-            // Lane marking
-            ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
-            ctx.beginPath(); ctx.moveTo(curbX - 80, 0); ctx.lineTo(curbX - 80, canvas.height); ctx.stroke(); ctx.setLineDash([]);
+             // Créneau: Horizontal Road
+             const cy = getCY(60);
+             ctx.fillRect(0, cy-20, canvas.width, 120); // Road strip
+             ctx.fillStyle = '#ccc'; ctx.fillRect(0, 0, canvas.width, cy-50); // Sidewalk top
+             ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
+             ctx.beginPath(); ctx.moveTo(0, cy+40); ctx.lineTo(canvas.width, cy+40); ctx.stroke(); ctx.setLineDash([]);
         }
 
         if (targetZone) {
@@ -589,12 +577,9 @@
             else if (obs.type === 'wall') {
                 ctx.fillStyle = '#95a5a6'; ctx.fillRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
                 ctx.strokeStyle = '#7f8c8d'; ctx.strokeRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
-                // Stripe effect for walls
-                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(obs.x - obs.w/2, obs.y-obs.h/2); ctx.lineTo(obs.x+obs.w/2, obs.y+obs.h/2); ctx.stroke();
             } else if (obs.type === 'car') {
                 ctx.save(); ctx.translate(obs.x, obs.y); 
-                // Handle Rotation for obstacles
-                if (obs.angle) ctx.rotate(obs.angle);
+                if (obs.angle) ctx.rotate(obs.angle); // Rotate car obstacles
                 ctx.drawImage(carObsImg, -15, -30, 30, 60); ctx.restore();
             }
         }
