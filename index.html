@@ -249,9 +249,6 @@
 
     // --- Assets ---
     let asphaltPattern;
-    // We use a color for red earth instead of texture for simplicity here, or procedural.
-    // We'll generate asphalt procedurally for roads.
-    
     const carImg = new Image(); carImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='60' viewBox='0 0 30 60'%3E%3Cpath d='M3,12 Q3,6 9,6 L21,6 Q27,6 27,12 L27,51 Q27,57 21,57 L9,57 Q3,57 3,51 Z' fill='%23ffffff' stroke='%23bdc3c7' stroke-width='1'/%3E%3Crect x='5' y='15' width='20' height='9' rx='1' fill='%232c3e50'/%3E%3Crect x='5' y='39' width='20' height='7' rx='1' fill='%232c3e50'/%3E%3Crect x='3' y='6' width='5' height='3' rx='0.5' fill='%23f1c40f'/%3E%3Crect x='22' y='6' width='5' height='3' rx='0.5' fill='%23f1c40f'/%3E%3Crect x='3' y='54' width='5' height='3' rx='0.5' fill='%23e74c3c'/%3E%3Crect x='22' y='54' width='5' height='3' rx='0.5' fill='%23e74c3c'/%3E%3Ctext x='15' y='35' font-family='Arial' font-size='8' fill='%233498db' text-anchor='middle' transform='rotate(-90 15 35)'%3EAUTO-ECOLE%3C/text%3E%3Cpath d='M6,27 L24,27' stroke='rgba(0,0,0,0.1)' stroke-width='1'/%3E%3C/svg%3E";
     const carObsImg = new Image(); carObsImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='60' viewBox='0 0 30 60'%3E%3Cpath d='M3,12 Q3,6 9,6 L21,6 Q27,6 27,12 L27,51 Q27,57 21,57 L9,57 Q3,57 3,51 Z' fill='%23e74c3c' stroke='%23c0392b' stroke-width='1'/%3E%3Crect x='5' y='15' width='20' height='9' rx='1' fill='%232c3e50'/%3E%3Crect x='5' y='39' width='20' height='7' rx='1' fill='%232c3e50'/%3E%3C/svg%3E";
     const coneImg = new Image(); coneImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%23e67e22' stroke='%23d35400' stroke-width='1'/%3E%3Ccircle cx='10' cy='10' r='5' fill='white'/%3E%3C/svg%3E";
@@ -273,9 +270,61 @@
     const getCY = (pct) => canvas.height * (pct / 100);
 
     const LEVELS = [
-        { title: "1. Le Stop", msg: "Arrête-toi DANS le rectangle vert.", setup: () => { car.x = getCX(50); car.y = getCY(85); car.angle = -Math.PI/2; targetZone = {x: getCX(50), y: getCY(35), w: 70, h: 90, angle: -Math.PI/2}; obstacles.push({type: 'sign', x: getCX(30), y: getCY(25), label: 'STOP'}); obstacles.push({type: 'wall', x: getCX(10), y: getCY(50), w: 20, h: getCY(100)}); obstacles.push({type: 'wall', x: getCX(90), y: getCY(50), w: 20, h: getCY(100)}); } },
-        { title: "2. Le Bataille", msg: "Gare-toi en marche avant.", setup: () => { car.x = getCX(20); car.y = getCY(85); car.angle = -Math.PI/2; const cx = getCX(50); const cy = getCY(50); targetZone = {x: cx, y: cy, w: 70, h: 90, angle: 0}; obstacles.push({type: 'cone', x: cx - 45, y: cy - 45}); obstacles.push({type: 'cone', x: cx - 45, y: cy + 45}); obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 10, h: 100}); } },
-        { title: "3. Le Créneau", msg: "Marche arrière obligatoire !", setup: () => { const cx = getCX(50); const cy = getCY(50); car.x = cx - 60; car.y = cy - 150; car.angle = Math.PI/2; targetZone = {x: cx, y: cy, w: 68, h: 94, angle: Math.PI/2}; obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 20, h: getCY(90)}); obstacles.push({type: 'car', x: cx, y: cy - 110, color: '#e74c3c'}); obstacles.push({type: 'car', x: cx, y: cy + 110, color: '#f1c40f'}); } }
+        {
+            title: "1. Le Stop",
+            msg: "Arrête-toi DANS le rectangle vert. Reste sur la voie de droite !",
+            setup: () => {
+                const roadW = 160; // 80px per lane
+                const roadX = getCX(50);
+                
+                // Car start: Right lane
+                car.x = roadX + 40; car.y = getCY(85); car.angle = -Math.PI/2;
+                
+                // Target: Right lane
+                targetZone = {x: roadX + 40, y: getCY(35), w: 70, h: 90, angle: -Math.PI/2};
+                
+                // Stop Sign
+                obstacles.push({type: 'sign', x: roadX + 90, y: getCY(25), label: 'STOP'});
+                
+                // Road borders (Invisible walls but visual edges)
+                obstacles.push({type: 'wall', x: roadX - 90, y: getCY(50), w: 20, h: getCY(100)}); // Left border
+                obstacles.push({type: 'wall', x: roadX + 90, y: getCY(50), w: 20, h: getCY(100)}); // Right border
+            }
+        },
+        {
+            title: "2. Le Bataille",
+            msg: "Gare-toi en marche avant entre les deux voitures. Doucement.",
+            setup: () => {
+                const cx = getCX(50); const cy = getCY(50);
+                car.x = getCX(20); car.y = getCY(85); car.angle = -Math.PI/2;
+                targetZone = {x: cx, y: cy, w: 70, h: 90, angle: 0};
+                
+                // Back wall
+                obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 10, h: 100});
+                
+                // Cars on sides instead of cones (Gap calculated: Zone 70 + margins)
+                // Left Car
+                obstacles.push({type: 'car', x: cx - 55, y: cy, color: '#e74c3c'});
+                // Right Car
+                obstacles.push({type: 'car', x: cx + 55, y: cy, color: '#f1c40f'});
+            }
+        },
+        {
+            title: "3. Le Créneau",
+            msg: "Marche arrière obligatoire ! Ne touche pas le trottoir à droite.",
+            setup: () => {
+                const cx = getCX(50); const cy = getCY(50);
+                car.x = cx - 60; car.y = cy - 150; car.angle = Math.PI/2;
+                targetZone = {x: cx, y: cy, w: 68, h: 94, angle: Math.PI/2};
+                
+                // Sidewalk (Right side of car)
+                obstacles.push({type: 'wall', x: cx + 50, y: cy, w: 20, h: getCY(100)}); 
+                
+                // Cars
+                obstacles.push({type: 'car', x: cx, y: cy - 110, color: '#e74c3c'});
+                obstacles.push({type: 'car', x: cx, y: cy + 110, color: '#f1c40f'});
+            }
+        }
     ];
 
     function generateAsphalt() {
@@ -486,42 +535,44 @@
         ctx.fillStyle = '#a0522d'; 
         ctx.fillRect(0, 0, canvas.width, canvas.height);
         
-        // Draw Road/Asphalt based on level type
-        // For simplicity in this level-agnostic draw, we draw a big patch of asphalt where the action is
-        // Or use the generated pattern for specific areas. 
-        // To keep it looking like "Brousse", we'll draw a large asphalt rectangle in the middle
+        // Asphalt drawing based on level
         ctx.fillStyle = asphaltPattern || '#555';
         
-        // Determine road area based on level (simplification)
-        // Level 1 (Stop): Vertical Road
         if (currentLevel === 0) {
-             ctx.fillRect(getCX(20), 0, getCX(60), canvas.height);
-             // White lines
-             ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
-             ctx.beginPath(); ctx.moveTo(getCX(50), 0); ctx.lineTo(getCX(50), canvas.height); ctx.stroke(); ctx.setLineDash([]);
-             // Stop Line
-             ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(getCX(20), getCY(30)); ctx.lineTo(getCX(80), getCY(30)); ctx.stroke();
+            // Level 1: Stop (Road with dashed line)
+            const roadX = getCX(50);
+            const roadW = 160; // Total width
+            ctx.fillRect(roadX - roadW/2, 0, roadW, canvas.height);
+            
+            // Lines
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+            // Middle line
+            ctx.setLineDash([20, 20]);
+            ctx.beginPath(); ctx.moveTo(roadX, 0); ctx.lineTo(roadX, canvas.height); ctx.stroke(); ctx.setLineDash([]);
+            // Stop Line
+            ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(roadX + 10, getCY(25)); ctx.lineTo(roadX + roadW/2 - 10, getCY(25)); ctx.stroke();
         } 
-        // Level 2 (Bataille): Parking Lot
         else if (currentLevel === 1) {
-             ctx.fillRect(0, 0, canvas.width, canvas.height); // Full asphalt
-             // Parking lines
-             ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
-             // Row of spots
-             const cx = getCX(50); const cy = getCY(50);
-             // Main line
-             ctx.beginPath(); ctx.moveTo(0, cy+50); ctx.lineTo(canvas.width, cy+50); ctx.stroke();
-             // Spot lines
-             ctx.beginPath(); ctx.moveTo(cx-35, cy-50); ctx.lineTo(cx-35, cy+50); ctx.stroke();
-             ctx.beginPath(); ctx.moveTo(cx+35, cy-50); ctx.lineTo(cx+35, cy+50); ctx.stroke();
+            // Level 2: Bataille (Parking Lot)
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+            // Parking Lines
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+            const cx = getCX(50); const cy = getCY(50);
+            // Main aisle line
+            ctx.beginPath(); ctx.moveTo(0, cy+50); ctx.lineTo(canvas.width, cy+50); ctx.stroke();
+            // Spots
+            ctx.beginPath(); ctx.moveTo(cx-35, cy-50); ctx.lineTo(cx-35, cy+50); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(cx+35, cy-50); ctx.lineTo(cx+35, cy+50); ctx.stroke();
         }
-        // Level 3 (Créneau): Street with curb
         else if (currentLevel === 2) {
-             ctx.fillRect(0, 0, getCX(80), canvas.height); // Road on left
-             // Curb
-             ctx.fillStyle = '#ccc'; ctx.fillRect(getCX(80), 0, getCX(20), canvas.height);
-             ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
-             ctx.beginPath(); ctx.moveTo(getCX(40), 0); ctx.lineTo(getCX(40), canvas.height); ctx.stroke(); ctx.setLineDash([]);
+            // Level 3: Créneau (Street + Curb)
+            const curbX = getCX(50) + 50;
+            ctx.fillRect(0, 0, curbX, canvas.height);
+            // Curb visual
+            ctx.fillStyle = '#ccc'; ctx.fillRect(curbX, 0, 20, canvas.height);
+            // Lane marking
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
+            ctx.beginPath(); ctx.moveTo(curbX - 80, 0); ctx.lineTo(curbX - 80, canvas.height); ctx.stroke(); ctx.setLineDash([]);
         }
 
         if (targetZone) {
@@ -536,11 +587,14 @@
             if (obs.type === 'cone') ctx.drawImage(coneImg, obs.x - 10, obs.y - 10, 20, 20);
             else if (obs.type === 'sign') ctx.drawImage(stopImg, obs.x - 20, obs.y - 20, 40, 40);
             else if (obs.type === 'wall') {
-                // Invisible wall logic mostly, but let's draw curb if it's a wall
-                // Already drawn by level specific logic above, or draw generic grey block
-                // ctx.fillStyle = '#95a5a6'; ctx.fillRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
+                ctx.fillStyle = '#95a5a6'; ctx.fillRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
+                ctx.strokeStyle = '#7f8c8d'; ctx.strokeRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
+                // Stripe effect for walls
+                ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(obs.x - obs.w/2, obs.y-obs.h/2); ctx.lineTo(obs.x+obs.w/2, obs.y+obs.h/2); ctx.stroke();
             } else if (obs.type === 'car') {
-                ctx.save(); ctx.translate(obs.x, obs.y); ctx.drawImage(carObsImg, -15, -30, 30, 60); ctx.restore();
+                ctx.save(); ctx.translate(obs.x, obs.y); 
+                // Simple rotation for parked cars if needed, here assumed vertical
+                ctx.drawImage(carObsImg, -15, -30, 30, 60); ctx.restore();
             }
         }
         drawCar();
