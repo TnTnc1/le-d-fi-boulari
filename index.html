@@ -15,7 +15,6 @@
             width: 100vw; 
             height: 100vh; 
             overflow: hidden; 
-            /* Image de fond paysage */
             background: url('https://i.postimg.cc/VL0sLRv5/IMG-3343.jpg') no-repeat center center;
             background-size: cover;
         }
@@ -229,9 +228,7 @@
 
     // --- Audio Engine ---
     let isMuted = false;
-    let engineOsc = null;
-    let engineGain = null;
-
+    
     function toggleMute() {
         isMuted = !isMuted;
         const btn = document.getElementById('globalMuteBtn');
@@ -240,7 +237,6 @@
         if (isMuted) {
             btn.innerText = "🔇";
             video.muted = true;
-            if(engineGain) engineGain.gain.value = 0;
             audioCtx.suspend();
         } else {
             btn.innerText = "🔊";
@@ -253,6 +249,9 @@
 
     // --- Assets ---
     let asphaltPattern;
+    // We use a color for red earth instead of texture for simplicity here, or procedural.
+    // We'll generate asphalt procedurally for roads.
+    
     const carImg = new Image(); carImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='60' viewBox='0 0 30 60'%3E%3Cpath d='M3,12 Q3,6 9,6 L21,6 Q27,6 27,12 L27,51 Q27,57 21,57 L9,57 Q3,57 3,51 Z' fill='%23ffffff' stroke='%23bdc3c7' stroke-width='1'/%3E%3Crect x='5' y='15' width='20' height='9' rx='1' fill='%232c3e50'/%3E%3Crect x='5' y='39' width='20' height='7' rx='1' fill='%232c3e50'/%3E%3Crect x='3' y='6' width='5' height='3' rx='0.5' fill='%23f1c40f'/%3E%3Crect x='22' y='6' width='5' height='3' rx='0.5' fill='%23f1c40f'/%3E%3Crect x='3' y='54' width='5' height='3' rx='0.5' fill='%23e74c3c'/%3E%3Crect x='22' y='54' width='5' height='3' rx='0.5' fill='%23e74c3c'/%3E%3Ctext x='15' y='35' font-family='Arial' font-size='8' fill='%233498db' text-anchor='middle' transform='rotate(-90 15 35)'%3EAUTO-ECOLE%3C/text%3E%3Cpath d='M6,27 L24,27' stroke='rgba(0,0,0,0.1)' stroke-width='1'/%3E%3C/svg%3E";
     const carObsImg = new Image(); carObsImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='60' viewBox='0 0 30 60'%3E%3Cpath d='M3,12 Q3,6 9,6 L21,6 Q27,6 27,12 L27,51 Q27,57 21,57 L9,57 Q3,57 3,51 Z' fill='%23e74c3c' stroke='%23c0392b' stroke-width='1'/%3E%3Crect x='5' y='15' width='20' height='9' rx='1' fill='%232c3e50'/%3E%3Crect x='5' y='39' width='20' height='7' rx='1' fill='%232c3e50'/%3E%3C/svg%3E";
     const coneImg = new Image(); coneImg.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 20 20'%3E%3Ccircle cx='10' cy='10' r='9' fill='%23e67e22' stroke='%23d35400' stroke-width='1'/%3E%3Ccircle cx='10' cy='10' r='5' fill='white'/%3E%3C/svg%3E";
@@ -305,7 +304,6 @@
     introVideo.addEventListener('ended', endIntro);
     skipBtn.addEventListener('click', endIntro);
     
-    // Manual Unmute button
     unmuteBtn.addEventListener('click', () => {
         introVideo.muted = false;
         unmuteBtn.classList.add('hidden');
@@ -354,12 +352,6 @@
         let elapsed = (Date.now() - startTime) / 1000 + penaltyTime;
         document.getElementById('timerVal').innerText = elapsed.toFixed(2) + "s";
         handleSteeringInput();
-        
-        // Save state before movement
-        const prevX = car.x;
-        const prevY = car.y;
-        const prevAngle = car.angle;
-
         const gas = car.inputs.gas || keys.up;
         const brake = car.inputs.brake || keys.down;
         if (car.gear === -1 && Math.abs(car.speed) > 0.1) hasReversed = true;
@@ -372,15 +364,7 @@
             car.x += car.speed * Math.cos(car.angle);
             car.y += car.speed * Math.sin(car.angle);
         }
-        
-        if (checkCollisions()) {
-            // Revert and bounce
-            car.x = prevX;
-            car.y = prevY;
-            car.angle = prevAngle;
-            car.speed = -car.speed * 0.5;
-        }
-        
+        checkCollisions();
         checkWin();
     }
 
@@ -400,27 +384,17 @@
 
     function checkCollisions() {
         const corners = getCarCorners(car);
-        let hit = false;
-        
+        if (Date.now() - lastCrashTime < 1000) return;
         for (let obs of obstacles) {
+            let hit = false;
             if (obs.type === 'cone' || obs.type === 'sign') { for (let p of corners) if (Math.hypot(p.x - obs.x, p.y - obs.y) < 10) hit = true; }
             else { let w = obs.w || 30; let h = obs.h || 30; for (let p of corners) if (p.x > obs.x - w/2 && p.x < obs.x + w/2 && p.y > obs.y - h/2 && p.y < obs.y + h/2) hit = true; }
-            
-            if (hit) { 
-                // Only apply penalty if cooldown is over
-                if (Date.now() - lastCrashTime > 1000) {
-                    crash("Boom ! Pénalité +5s"); 
-                }
-                return true; 
-            }
+            if (hit) { crash("Boom ! Pénalité +5s"); return; }
         }
         if (car.x < 0 || car.x > canvas.width || car.y < 0 || car.y > canvas.height) {
-            if (Date.now() - lastCrashTime > 1000) {
-                crash("Sortie de route ! +5s");
-            }
-            return true;
+             if (Date.now() - lastCrashTime > 1000) crash("Sortie de route ! +5s");
+             return;
         }
-        return false;
     }
 
     function getCarCorners(c) {
@@ -440,6 +414,7 @@
         timerEl.classList.add('penalty-flash');
         setTimeout(() => timerEl.classList.remove('penalty-flash'), 500);
         document.getElementById('monitorMsg').innerText = msg;
+        car.speed = -car.speed * 0.5;
     }
 
     function isPointInTarget(p, t) {
@@ -506,7 +481,49 @@
 
     function draw() {
         if (state !== 'PLAYING') { ctx.clearRect(0,0,canvas.width, canvas.height); return; }
-        ctx.fillStyle = asphaltPattern || '#555'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw Red Earth Background
+        ctx.fillStyle = '#a0522d'; 
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+        
+        // Draw Road/Asphalt based on level type
+        // For simplicity in this level-agnostic draw, we draw a big patch of asphalt where the action is
+        // Or use the generated pattern for specific areas. 
+        // To keep it looking like "Brousse", we'll draw a large asphalt rectangle in the middle
+        ctx.fillStyle = asphaltPattern || '#555';
+        
+        // Determine road area based on level (simplification)
+        // Level 1 (Stop): Vertical Road
+        if (currentLevel === 0) {
+             ctx.fillRect(getCX(20), 0, getCX(60), canvas.height);
+             // White lines
+             ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
+             ctx.beginPath(); ctx.moveTo(getCX(50), 0); ctx.lineTo(getCX(50), canvas.height); ctx.stroke(); ctx.setLineDash([]);
+             // Stop Line
+             ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(getCX(20), getCY(30)); ctx.lineTo(getCX(80), getCY(30)); ctx.stroke();
+        } 
+        // Level 2 (Bataille): Parking Lot
+        else if (currentLevel === 1) {
+             ctx.fillRect(0, 0, canvas.width, canvas.height); // Full asphalt
+             // Parking lines
+             ctx.strokeStyle = '#fff'; ctx.lineWidth = 4;
+             // Row of spots
+             const cx = getCX(50); const cy = getCY(50);
+             // Main line
+             ctx.beginPath(); ctx.moveTo(0, cy+50); ctx.lineTo(canvas.width, cy+50); ctx.stroke();
+             // Spot lines
+             ctx.beginPath(); ctx.moveTo(cx-35, cy-50); ctx.lineTo(cx-35, cy+50); ctx.stroke();
+             ctx.beginPath(); ctx.moveTo(cx+35, cy-50); ctx.lineTo(cx+35, cy+50); ctx.stroke();
+        }
+        // Level 3 (Créneau): Street with curb
+        else if (currentLevel === 2) {
+             ctx.fillRect(0, 0, getCX(80), canvas.height); // Road on left
+             // Curb
+             ctx.fillStyle = '#ccc'; ctx.fillRect(getCX(80), 0, getCX(20), canvas.height);
+             ctx.strokeStyle = '#fff'; ctx.lineWidth = 4; ctx.setLineDash([20, 20]);
+             ctx.beginPath(); ctx.moveTo(getCX(40), 0); ctx.lineTo(getCX(40), canvas.height); ctx.stroke(); ctx.setLineDash([]);
+        }
+
         if (targetZone) {
             ctx.save(); ctx.translate(targetZone.x, targetZone.y); ctx.rotate(targetZone.angle);
             ctx.strokeStyle = '#2ecc71'; ctx.lineWidth = 4; ctx.setLineDash([10, 10]);
@@ -519,8 +536,9 @@
             if (obs.type === 'cone') ctx.drawImage(coneImg, obs.x - 10, obs.y - 10, 20, 20);
             else if (obs.type === 'sign') ctx.drawImage(stopImg, obs.x - 20, obs.y - 20, 40, 40);
             else if (obs.type === 'wall') {
-                ctx.fillStyle = '#95a5a6'; ctx.fillRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
-                ctx.strokeStyle = '#7f8c8d'; ctx.strokeRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
+                // Invisible wall logic mostly, but let's draw curb if it's a wall
+                // Already drawn by level specific logic above, or draw generic grey block
+                // ctx.fillStyle = '#95a5a6'; ctx.fillRect(obs.x - obs.w/2, obs.y - obs.h/2, obs.w, obs.h);
             } else if (obs.type === 'car') {
                 ctx.save(); ctx.translate(obs.x, obs.y); ctx.drawImage(carObsImg, -15, -30, 30, 60); ctx.restore();
             }
