@@ -294,30 +294,25 @@
 
     document.getElementById('globalMuteBtn').addEventListener('click', function(e) {
         toggleMute();
-        this.blur(); // Retire le focus pour que la barre espace n'active plus le bouton
+        this.blur(); // Retire le focus
     });
 
     // --- Fullscreen Management ---
     function toggleFullScreen() {
         var doc = window.document;
         var docEl = doc.documentElement;
-
         var requestFullScreen = docEl.requestFullscreen || docEl.mozRequestFullScreen || docEl.webkitRequestFullScreen || docEl.msRequestFullscreen;
         var cancelFullScreen = doc.exitFullscreen || doc.mozCancelFullScreen || doc.webkitExitFullscreen || doc.msExitFullscreen;
 
         if(!doc.fullscreenElement && !doc.mozFullScreenElement && !doc.webkitFullscreenElement && !doc.msFullscreenElement) {
-            if (requestFullScreen) {
-                requestFullScreen.call(docEl);
-            }
+            if (requestFullScreen) { requestFullScreen.call(docEl); }
         } else {
-            if (cancelFullScreen) {
-                cancelFullScreen.call(doc);
-            }
+            if (cancelFullScreen) { cancelFullScreen.call(doc); }
         }
     }
     document.getElementById('fsToggleBtn').addEventListener('click', function(e) {
         toggleFullScreen();
-        this.blur(); // Retire le focus
+        this.blur(); 
     });
 
     // --- Assets ---
@@ -379,13 +374,15 @@
                 const parkX = getCX(70);
                 const parkY = getCY(50);
                 
-                // Target Horizontal (90x70) - Horizontal slot
-                targetZone = {x: parkX, y: parkY, w: 90, h: 70, angle: -Math.PI/2};
+                // Target (Horizontal)
+                targetZone = {x: parkX, y: parkY, w: 90, h: 70, angle: 0};
                 
                 // Wall Back
                 obstacles.push({type: 'wall', x: parkX + 55, y: parkY, w: 10, h: 300});
                 
-                // Cars Above and Below - HORIZONTAL (Rotated -PI/2)
+                // Cars Above and Below - HORIZONTAL (Rotated -PI/2) -> Corrected to be PERPENDICULAR
+                // Obstacle Car Angle 0 = Vertical (facing right visually but sprite is vertical)
+                // We need them horizontal. Car Sprite is Vertical. So rotate -PI/2.
                 obstacles.push({type: 'car', x: parkX, y: parkY - 80, angle: -Math.PI/2, color: '#e74c3c'});
                 obstacles.push({type: 'car', x: parkX, y: parkY + 80, angle: -Math.PI/2, color: '#f1c40f'});
             }
@@ -407,7 +404,8 @@
                 // Curb (Top)
                 obstacles.push({type: 'wall', x: getCX(50), y: roadY - 80, w: getCX(100), h: 20});
                 
-                // Cars (Left and Right) - Horizontal (Rotated -PI/2 to face sideways)
+                // Cars (Left and Right) - Horizontal
+                // Need to rotate them -PI/2 to be horizontal
                 obstacles.push({type: 'car', x: targetX - 110, y: roadY - 35, angle: -Math.PI/2, color: '#e74c3c'});
                 obstacles.push({type: 'car', x: targetX + 110, y: roadY - 35, angle: -Math.PI/2, color: '#f1c40f'});
             }
@@ -536,16 +534,23 @@
     function checkCollisions() {
         const corners = getCarCorners(car);
         let hit = false;
+        
         for (let obs of obstacles) {
             if (obs.type === 'cone' || obs.type === 'sign') { for (let p of corners) if (Math.hypot(p.x - obs.x, p.y - obs.y) < 10) hit = true; }
             else { let w = obs.w || 30; let h = obs.h || 30; for (let p of corners) if (p.x > obs.x - w/2 && p.x < obs.x + w/2 && p.y > obs.y - h/2 && p.y < obs.y + h/2) hit = true; }
+            
             if (hit) { 
-                if (Date.now() - lastCrashTime > 1000) crash("Boom ! Pénalité +5s"); 
+                // Only apply penalty if cooldown is over
+                if (Date.now() - lastCrashTime > 1000) {
+                    crash("Boom ! Pénalité +5s"); 
+                }
                 return true; 
             }
         }
         if (car.x < 0 || car.x > canvas.width || car.y < 0 || car.y > canvas.height) {
-            if (Date.now() - lastCrashTime > 1000) crash("Sortie de route ! +5s");
+            if (Date.now() - lastCrashTime > 1000) {
+                crash("Sortie de route ! +5s");
+            }
             return true;
         }
         return false;
@@ -732,9 +737,54 @@
     function toggleGear() { car.gear *= -1; updateGearUI(); playSound('click'); }
     function updateGearUI() { const stick = document.getElementById('gearStick'); if (car.gear === 1) { stick.innerText = "D"; stick.className = "gear-stick gear-d"; } else { stick.innerText = "R"; stick.className = "gear-stick gear-r"; } }
     const wheelZone = document.getElementById('wheelZone'); const wheelKnob = document.getElementById('wheelKnob'); let isSteering = false;
+    
+    // FIX: Variable wheelTouchId was missing in global scope, declared here
+    let wheelTouchId = null;
+
     function handleSteer(cx) { const rect = wheelZone.getBoundingClientRect(); const dx = cx - (rect.left + rect.width/2); let val = Math.max(-1, Math.min(1, dx / (rect.width/2))); car.inputs.steerTarget = val; wheelKnob.style.left = (50 + val * 40) + '%'; }
-    wheelZone.addEventListener('touchstart', e => { e.preventDefault(); isSteering = true; handleSteer(e.touches[0].clientX); }, {passive: false}); wheelZone.addEventListener('touchmove', e => { e.preventDefault(); if(isSteering) handleSteer(e.touches[0].clientX); }, {passive: false}); wheelZone.addEventListener('touchend', () => { isSteering = false; if (!keys.left && !keys.right) { car.inputs.steerTarget = 0; wheelKnob.style.left = '50%'; } });
-    wheelZone.addEventListener('mousedown', e => { isSteering = true; handleSteer(e.clientX); }); window.addEventListener('mousemove', e => { if(isSteering) handleSteer(e.clientX); }); window.addEventListener('mouseup', () => { isSteering = false; if (!keys.left && !keys.right) { car.inputs.steerTarget = 0; wheelKnob.style.left = '50%'; }});
+    
+    wheelZone.addEventListener('touchstart', e => { 
+        e.preventDefault(); 
+        const touch = e.changedTouches[0];
+        wheelTouchId = touch.identifier;
+        isSteering = true; 
+        handleSteer(touch.clientX); 
+    }, {passive: false});
+
+    wheelZone.addEventListener('touchmove', e => { 
+        e.preventDefault(); 
+        if(!isSteering) return;
+        for(let i=0; i<e.changedTouches.length; i++) {
+            if(e.changedTouches[i].identifier === wheelTouchId) {
+                handleSteer(e.changedTouches[i].clientX);
+            }
+        }
+    }, {passive: false});
+
+    const endSteer = (e) => {
+        for(let i=0; i<e.changedTouches.length; i++) {
+            if(e.changedTouches[i].identifier === wheelTouchId) {
+                isSteering = false;
+                wheelTouchId = null;
+                if (!keys.left && !keys.right) { 
+                    car.inputs.steerTarget = 0; 
+                    wheelKnob.style.left = '50%'; 
+                }
+            }
+        }
+    };
+    
+    wheelZone.addEventListener('touchend', endSteer);
+    wheelZone.addEventListener('touchcancel', endSteer);
+    
+    // Mouse fallback
+    wheelZone.addEventListener('mousedown', e => { isSteering = true; handleSteer(e.clientX); });
+    window.addEventListener('mousemove', e => { if(isSteering) handleSteer(e.clientX); });
+    window.addEventListener('mouseup', () => { 
+        isSteering = false; 
+        if (!keys.left && !keys.right) { car.inputs.steerTarget = 0; wheelKnob.style.left = '50%'; }
+    });
+
     const btnGas = document.getElementById('btnGas'); const btnBrake = document.getElementById('btnBrake'); const gearStick = document.getElementById('gearStick'); const setGas = (on) => car.inputs.gas = on; const setBrake = (on) => car.inputs.brake = on;
     btnGas.addEventListener('touchstart', (e) => { e.preventDefault(); setGas(true); }); btnGas.addEventListener('touchend', (e) => { e.preventDefault(); setGas(false); }); btnGas.addEventListener('mousedown', () => setGas(true)); btnGas.addEventListener('mouseup', () => setGas(false));
     btnBrake.addEventListener('touchstart', (e) => { e.preventDefault(); setBrake(true); }); btnBrake.addEventListener('touchend', (e) => { e.preventDefault(); setBrake(false); }); btnBrake.addEventListener('mousedown', () => setBrake(true)); btnBrake.addEventListener('mouseup', () => setBrake(false));
